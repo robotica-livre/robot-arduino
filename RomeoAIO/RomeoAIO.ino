@@ -1,11 +1,22 @@
 /** Robot Arduino
   * 
   */
-int E1 = 5;    //M1 Speed Control
-int E2 = 6;    //M2 Speed Control
-int M1 = 4;    //M1 Direction Control
-int M2 = 7;    //M1 Direction Control
+
+// Motores
+#define E1 5    //M1 Speed Control
+#define E2 6    //M2 Speed Control
+#define M1 4    //M1 Direction Control
+#define M2 7    //M2 Direction Control
  
+// Sensores
+#define S1  8
+#define S2  9
+#define S3 10
+#define S4 11
+
+void drive(char a, char b, boolean c, boolean d) {
+}
+
 void stop(void) {
   digitalWrite(E1,LOW);   
   digitalWrite(E2,LOW);      
@@ -18,14 +29,14 @@ void advance(char a,char b) {
   digitalWrite(M2,HIGH);
 }  
 
-void back_off (char a,char b) {
+void back_off(char a,char b) {
   analogWrite (E1,a);
   digitalWrite(M1,LOW);   
   analogWrite (E2,b);    
   digitalWrite(M2,LOW);
 }
 
-void turn_L (char a,char b) {
+void turn_L(char a,char b) {
   analogWrite (E1,a);
   digitalWrite(M1,LOW);    
   analogWrite (E2,b);    
@@ -41,8 +52,10 @@ void turn_R (char a,char b) {
 
 void setup(void) { 
   int i;
-  for(i=4;i<=7;i++)
-    pinMode(i, OUTPUT);  
+  for(i=M1;i<=M2;i++) // Setando saida motores
+    pinMode(i, OUTPUT);
+  for(i=S1;i<=S4;i++) // Setando entrada sensores
+    pinMode(i, INPUT);  
   Serial.begin(19200);      //Set Baud Rate
   Serial.println("Run keyboard control");
 }
