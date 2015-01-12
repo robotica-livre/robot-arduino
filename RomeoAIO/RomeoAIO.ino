@@ -14,36 +14,33 @@
 #define S3 10
 #define S4 11
 
-void drive(char a, char b, boolean c, boolean d) {
-}
-
 void stop(void) {
-  digitalWrite(E1,LOW);   
-  digitalWrite(E2,LOW);      
+  digitalWrite(E1, LOW);   
+  digitalWrite(E2, LOW);      
 }
 
-void advance(char a,char b) {
-  analogWrite (E1,a);      //PWM Speed Control
-  digitalWrite(M1,HIGH);    
-  analogWrite (E2,b);    
-  digitalWrite(M2,HIGH);
+void forward(char a, char b) {
+  analogWrite (E1, a);      //PWM Speed Control
+  digitalWrite(M1, HIGH);    
+  analogWrite (E2, b);    
+  digitalWrite(M2, HIGH);
 }  
 
-void back_off(char a,char b) {
-  analogWrite (E1,a);
-  digitalWrite(M1,LOW);   
-  analogWrite (E2,b);    
-  digitalWrite(M2,LOW);
+void backward(char a, char b) {
+  analogWrite (E1, a);
+  digitalWrite(M1, LOW);   
+  analogWrite (E2, b);    
+  digitalWrite(M2, LOW);
 }
 
-void turn_L(char a,char b) {
+void turnLeft(char a,char b) {
   analogWrite (E1,a);
   digitalWrite(M1,LOW);    
   analogWrite (E2,b);    
   digitalWrite(M2,HIGH);
 }
 
-void turn_R (char a,char b) {
+void turnRight(char a,char b) {
   analogWrite (E1,a);
   digitalWrite(M1,HIGH);    
   analogWrite (E2,b);    
@@ -66,16 +63,16 @@ void loop(void) {
     if(val != -1) {
       switch(val) {
       case 'w'://Move Forward
-        advance (255,255);   //move forward in max speed
+        forward(255,255);   //move forward in max speed
         break;
       case 's'://Move Backward
-        back_off (255,255);   //move back in max speed
+        backward(255,255);   //move back in max speed
         break;
       case 'a'://Turn Left
-        turn_L (100,100);
+        turnLeft(100,100);
         break;       
       case 'd'://Turn Right
-        turn_R (100,100);
+        turnRight(100,100);
         break;
       case 'z':
         Serial.println("Hello");
