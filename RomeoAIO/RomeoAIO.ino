@@ -21,10 +21,20 @@
 #define LEFT     2
 #define RIGHT    3
 
+// Definicoes dos botoes
+#define btnRIGHT  0
+#define btnUP     1
+#define btnDOWN   2
+#define btnLEFT   3
+#define btnSELECT 4
+#define btnNONE   5
+
 // Display
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
-int state = 0;
+int state       = 0;
+int lcd_key     = 0;
+int adc_key_in  = 0;
 
 void stop(void) {
   digitalWrite(E1, LOW);   
@@ -55,6 +65,18 @@ void drive(char left, char right, int direction) {
   }
 }
 
+int readButtons() {
+  adc_key_in = analogRead(0);
+  if (adc_key_in > 1000) return btnNONE;
+  if (adc_key_in < 50)   return btnRIGHT;
+  if (adc_key_in < 195)  return btnUP;
+  if (adc_key_in < 380)  return btnDOWN;
+  if (adc_key_in < 555)  return btnLEFT;
+  if (adc_key_in < 790)  return btnSELECT;
+  
+  return btnNONE;
+}
+
 void printMenu() {
   lcd.setCursor(0,0);
   lcd.print("Robot-arduino");
@@ -70,6 +92,7 @@ void setup(void) {
 }
 
 void loop(void) {
+  readButtons();
   switch(state) {
   case 0:
       printMenu();
