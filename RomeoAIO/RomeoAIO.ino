@@ -33,15 +33,10 @@
 // Display
 LiquidCrystal_I2C lcd(32, 16, 2);
 
-<<<<<<< HEAD
+
 int state = 0;
 int sel = 0;
 int botoes;
-=======
-int state       = 0;
-int lcd_key     = 0;
-int adc_key_in  = 0;
->>>>>>> 6ab2573e9100a596592476ce07f181e0cbf93b66
 
 void stop(void) {
   digitalWrite(E1, LOW);   
@@ -72,16 +67,8 @@ void drive(char left, char right, int direction) {
   }
 }
 
-int readButtons() {
-  adc_key_in = analogRead(0);
-  if (adc_key_in > 1000) return btnNONE;
-  if (adc_key_in < 50)   return btnRIGHT;
-  if (adc_key_in < 195)  return btnUP;
-  if (adc_key_in < 380)  return btnDOWN;
-  if (adc_key_in < 555)  return btnLEFT;
-  if (adc_key_in < 790)  return btnSELECT;
-  
-  return btnNONE;
+void lineFollowing() {
+  // TODO: Implement Line Following algorithm
 }
 
 void printMenu() {
@@ -97,11 +84,10 @@ void setup(void) {
     pinMode(i, INPUT);  
   lcd.init();
   lcd.backlight();
-  attachInterrupt(0, drive, RISING);
+  attachInterrupt(0, lineFollowing, RISING);
 }
 
 void loop(void) {
-<<<<<<< HEAD
   atualiza_menu();
   menu_list();
 }
@@ -136,12 +122,10 @@ void menu_list() {
     lcd.print(" Seguir Linha ");
     lcd.setCursor(0, 1);
     lcd.print("");
-=======
-  readButtons();
-  switch(state) {
-  case 0:
-      printMenu();
-      break;
->>>>>>> 6ab2573e9100a596592476ce07f181e0cbf93b66
+  } else if(state == 3) {
+    lcd.setCursor(0, 0);
+    lcd.print(" Testar motores ");
+    lcd.setCursor(0, 1);
+    lcd.print("");
   }
 }
