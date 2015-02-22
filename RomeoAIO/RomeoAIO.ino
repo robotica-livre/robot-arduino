@@ -1,7 +1,8 @@
 /** Robot Arduino
  * 
  */
-#include <LiquidCrystal.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 
 // Motores
 #define M1 4 //M1 Direction Control
@@ -22,9 +23,11 @@
 #define RIGHT    3
 
 // Display
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+LiquidCrystal_I2C lcd(32, 16, 2);
 
 int state = 0;
+int sel = 0;
+int botoes;
 
 void stop(void) {
   digitalWrite(E1, LOW);   
@@ -66,14 +69,45 @@ void setup(void) {
     pinMode(i, OUTPUT);
   for(i=S1; i<=S4; i++)
     pinMode(i, INPUT);  
-  lcd.begin(0,0); 
+  lcd.init();
+  lcd.backlight();
+  attachInterrupt(0, drive, RISING);
 }
 
 void loop(void) {
-  switch(state) {
-  case 0:
-      printMenu();
-      break;
+  atualiza_menu();
+  menu_list();
+}
+
+void atualiza_menu() {
+  if(botoes > 100 && botoes < 200) {
+    if(state > 0) {
+      state--;
+    }
+  } else if(botoes > 700 && botoes < 800) {
+    if(state < 2) {
+      state++;
+    }
+  } else if(botoes < 100) {
+    sel = 1;
   }
-  
+}
+
+void menu_list() {
+  if(state == 0) {
+    lcd.setCursor(0, 0);
+    lcd.print("Robot-Arduino");
+    lcd.setCursor(0, 1);
+    lcd.print("");
+  } else if(state == 1) {
+    lcd.setCursor(0, 0);
+    lcd.print("Ajustar Sensores");
+    lcd.setCursor(0, 1);
+    lcd.print("");
+  } else if(state == 2) {
+    lcd.setCursor(0, 0);
+    lcd.print(" Seguir Linha ");
+    lcd.setCursor(0, 1);
+    lcd.print("");
+  }
 }
