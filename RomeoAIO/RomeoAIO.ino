@@ -1,8 +1,8 @@
 /** Robot Arduino
- * 
  */
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <MenuBackend.h>
 
 // Motores
 #define M1 4 //M1 Direction Control
@@ -21,7 +21,7 @@
 #define BACKWARD 1
 #define LEFT     2
 #define RIGHT    3
-
+ 
 // Definicoes dos botoes
 #define btnRIGHT  0
 #define btnUP     1
@@ -31,8 +31,14 @@
 #define btnNONE   5
 
 // Display
-LiquidCrystal_I2C lcd(32, 16, 2);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
+MenuBackend menu = MenuBackend(menuUseEvent, menuChangeEvent);
+  MenuItem ajustarParametros = MenuItem("Ajustar Parametros");
+  MenuItem seguirLinha = MenuItem("Seguir Linha");
+  MenuItem diagnostico = MenuItem("Diagnostico");
+    MenuItem testarMotores = MenuItem("Testar Motores");
+    MenuItem testarSensores = MenuItem("Testar Sensores");
 
 int state = 0;
 int sel = 0;
@@ -72,7 +78,7 @@ void lineFollowing() {
 }
 
 void printMenu() {
-  lcd.setCursor(0,0);
+  lcd.begin(0,0);
   lcd.print("Robot-arduino");
 }
 
@@ -84,7 +90,12 @@ void setup(void) {
     pinMode(i, INPUT);  
   lcd.init();
   lcd.backlight();
-  attachInterrupt(0, lineFollowing, RISING);
+  
+  menu.getRoot().add(ajustarParametros);
+  menu.getRoot().add(seguirLinha);
+  menu.getRoot().add(diagnostico);
+    diagnostico.add(testarMotores);
+    diagnostico.add(testarSensores);
 }
 
 void loop(void) {
