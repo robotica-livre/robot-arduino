@@ -3,7 +3,7 @@
  */
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-#include <MenuBackend.h>
+#include <MenuSystem.h>
 
 // Motores
 #define M1 4 //M1 Direction Control
@@ -27,12 +27,13 @@
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 // Menu dos Display
-MenuBackend menu = MenuBackend(menuUseEvent, menuChangeEvent);
-MenuItem ajustarParametros = MenuItem("Ajustar Parametros");
-MenuItem seguirLinha = MenuItem("Seguir Linha");
-MenuItem diagnostico = MenuItem("Diagnostico");
-MenuItem testarMotores = MenuItem("Testar Motores");
-MenuItem testarSensores = MenuItem("Testar Sensores");
+MenuSystem ms;
+Menu mm("Robot Arduino");
+Menu ajustarParametros("Ajustar Parametros");
+MenuItem seguirLinha("Seguir Linha");
+Menu diagnostico("Diagnostico");
+MenuItem testarMotores("Testar Motores");
+MenuItem testarSensores("Testar Sensores");
 
 int adc_key_val[5] = { 30, 150, 360, 535, 760 };
 int NUM_KEYS = 5;
@@ -71,7 +72,7 @@ void drive(char left, char right, int direction) {
   }
 }
 
-void lineFollowing() {
+void lineFollowing(MenuItem* p_menu_item) {
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Go! go! go! ...");
@@ -119,48 +120,48 @@ int read_sensor_data() {
   }
 }
 
+void testa_motores(MenuItem* p_menu_item) {
+  drive(255, 255, FORWARD);
+  delay(2000);
+  drive(255, 255, BACKWARD);
+  delay(2000);
+  drive(255, 255, LEFT);
+  delay(2000);
+  drive(255, 255, RIGHT);
+  delay(2000);
+}
+
+void testa_sensores(MenuItem* p_menu_item) {
+  lcd.clear();
+  lcd.setCursor(0,1);
+  lcd.print(read_sensor_data());
+}
+
 void atualiza_menu() {
+  lcd.setCursor(0,0);
+  Menu const* cp_menu = ms.get_current_menu();
+  lcd.print(cp_menu->get_name());
+  lcd.setCursor(0,1);
+  lcd.print(cp_menu->get_selected()->get_name());
+  
   adc_key_in = analogRead(0);
   int key = get_key(adc_key_in);
   switch (key) {
-    case 0: menu.moveRight(); break;
-    case 1: menu.moveUp(); break;
-    case 2: menu.moveDown(); break;
-    case 3: menu.moveLeft(); break;
-    case 4: menu.use(); break;
+    case 0: lcd.clear(); ms.back(); delay(500); break;
+    case 1: lcd.clear(); ms.prev(); delay(500); break;
+    case 3: lcd.clear(); ms.next(); delay(500); break;
+    case 4: lcd.clear(); ms.select(); delay(500); break;
   }
-
 }
 
 // Convert ADC value to key number
 int get_key(unsigned int input) {
   int k;
   for (k = 0; k < NUM_KEYS; k++) {
-    if (input < adc_key_val[k]) {
-      return k;
-    }
+    if (input < adc_key_val[k]) return k;
   }
-  if (k >= NUM_KEYS)
-    k = -1;     // No valid key pressed
+  if (k >= NUM_KEYS) k = -1; // No valid key pressed
   return k;
-}
-
-void menuUseEvent(MenuUseEvent used) {
-  if (used.item == ajustarParametros) {
-    // TODO: Implementar ajustarParametros
-  } else if (used.item == seguirLinha) {
-    lineFollowing();
-  } else if (used.item == testarMotores) {
-    // TODO: implementar testarMotores
-  } else if (used.item == testarSensores) {
-    // TODO: implementar testarSensores
-  }
-}
-
-void menuChangeEvent(MenuChangeEvent changed) {
-  lcd.clear();
-  lcd.setCursor(1, 0);
-  lcd.print(changed.to.getName());
 }
 
 void setup(void) {
@@ -171,13 +172,15 @@ void setup(void) {
     pinMode(i, INPUT);
   lcd.init();
   lcd.backlight();
-
-  menu.getRoot().add(ajustarParametros);
-  ajustarParametros.addAfter(seguirLinha);
-  seguirLinha.addBefore(ajustarParametros);
-  seguirLinha.addAfter(diagnostico);
-  diagnostico.addBefore(seguirLinha);
-  diagnostico.addAfter(ajustarParametros);
+  lcd.clear();
+  
+  mm.add_menu(&ajustarParametros);
+  mm.add_item(&seguirLinha, &lineFollowing);
+  mm.add_menu(&diagnostico);
+  diagnostico.add_item(&testarMotores, &testa_motores);
+  diagnostico.add_item(&testarSensores, &testa_sensores);
+  ms.set_root_menu(&mm);
+  atualiza_menu();
 }
 
 void loop(void) {
