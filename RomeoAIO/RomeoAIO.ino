@@ -99,6 +99,9 @@ void lineFollowing(MenuItem* p_menu_item) {
       drive(max + power_difference, max, FORWARD);
     else
       drive(max, max - power_difference, FORWARD);
+    
+    adc_key_in = analogRead(0);
+    if(get_key(adc_key_in) == 0) { stop(); return; }
   }
 }
 
@@ -129,12 +132,19 @@ void testa_motores(MenuItem* p_menu_item) {
   delay(2000);
   drive(255, 255, RIGHT);
   delay(2000);
+  stop();
 }
 
 void testa_sensores(MenuItem* p_menu_item) {
   lcd.clear();
   lcd.setCursor(0,1);
-  lcd.print(read_sensor_data());
+  while(1) {
+    lcd.clear();
+    lcd.print(read_sensor_data());
+    delay(500);
+    adc_key_in = analogRead(0);
+    if(get_key(adc_key_in) == 0) return;
+  }
 }
 
 void atualiza_menu() {
