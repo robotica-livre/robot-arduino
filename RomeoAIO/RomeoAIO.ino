@@ -1,9 +1,10 @@
- /**
+/**
  * Robot Arduino
  */
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <MenuSystem.h>
+#include <EEPROM.h>
 
 // Motores
 #define M1 4 //M1 Direction Control
@@ -26,22 +27,26 @@
 // Display
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-// Menu dos Display
+// Menu do Display
 MenuSystem ms;
 Menu mm("Robot Arduino");
 Menu ajustarParametros("Ajustar Parametros");
+
 MenuItem seguirLinha("Seguir Linha");
 Menu diagnostico("Diagnostico");
 MenuItem testarMotores("Testar Motores");
 MenuItem testarSensores("Testar Sensores");
 
-int adc_key_val[5] = { 30, 150, 360, 535, 760 };
+int adc_key_val[5] = { 50, 200, 400, 600, 800 };
 int NUM_KEYS = 5;
 int adc_key_in;
 
 float average = 0;
-int last_proportional;
-int integral;
+double prev_error = 0;
+double integral = 0;
+double Kp = 1 / 20;
+double Ki = 1 / 10000;
+double Kd = 3/2;
 
 void stop(void) {
   digitalWrite(E1, LOW);
@@ -79,16 +84,15 @@ void lineFollowing(MenuItem* p_menu_item) {
   delay(500);
   drive(255,255,FORWARD);
   while (1) {
-    unsigned int position = read_sensor_data(); // TODO: Read sensor data
-
-    int proportional = ((int)position) - 2000;
-
-    int derivative = proportional - last_proportional;
-    integral += proportional;
-
-    last_proportional = proportional;
-
-    int power_difference = proportional / 10 + integral / 10000 + derivative * 3 / 2;
+    delay(100);
+    double position = read_sensor_data(); // TODO: Read sensor data
+    
+    double error = 0 - position;
+    double integral = integral + error * 0.1;
+    double derivative = (error - prev_error)/0.1;
+    
+    double power_difference  = (Kp * error) + (Ki * integral) + (Kd * derivative);
+    prev_error = error;
 
     const int max = 180;
     if (power_difference > max)
@@ -105,8 +109,8 @@ void lineFollowing(MenuItem* p_menu_item) {
   }
 }
 
-int read_sensor_data() {
-  byte sens = (digitalRead(S1) == LOW) + (digitalRead(S2) == LOW) * 2 + (digitalRead(S3) == LOW) * 4 + (digitalRead(S4) == LOW) * 8;
+double read_sensor_data() {
+  byte sens = (digitalRead(S1) == HIGH) + (digitalRead(S2) == HIGH) * 2 + (digitalRead(S3) == HIGH) * 4 + (digitalRead(S4) == HIGH) * 8;
   switch(sens) {
     case B00000001:
       return 2;
@@ -124,13 +128,13 @@ int read_sensor_data() {
 }
 
 void testa_motores(MenuItem* p_menu_item) {
-  drive(255, 255, FORWARD);
+  drive(180, 180, FORWARD);
   delay(2000);
-  drive(255, 255, BACKWARD);
+  drive(180, 180, BACKWARD);
   delay(2000);
-  drive(255, 255, LEFT);
+  drive(180, 180, LEFT);
   delay(2000);
-  drive(255, 255, RIGHT);
+  drive(180, 180, RIGHT);
   delay(2000);
   stop();
 }
@@ -154,13 +158,13 @@ void atualiza_menu() {
   lcd.setCursor(0,1);
   lcd.print(cp_menu->get_selected()->get_name());
   
-  adc_key_in = analogRead(0);
+  adc_key_in = analogRead(7);
   int key = get_key(adc_key_in);
   switch (key) {
-    case 0: lcd.clear(); ms.back(); delay(500); break;
-    case 1: lcd.clear(); ms.prev(); delay(500); break;
-    case 3: lcd.clear(); ms.next(); delay(500); break;
-    case 4: lcd.clear(); ms.select(); delay(500); break;
+    case 0: lcd.clear(); ms.back(); delay(200); break;
+    case 1: lcd.clear(); ms.prev(); delay(200); break;
+    case 3: lcd.clear(); ms.next(); delay(200); break;
+    case 4: lcd.clear(); ms.select(); delay(200); break;
   }
 }
 
