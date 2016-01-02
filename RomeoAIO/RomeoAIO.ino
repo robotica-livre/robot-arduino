@@ -84,8 +84,7 @@ void parametrizar_Kp(MenuItem* p_menu_item) {
   while(1) {
     lcd.setCursor(0,1);
     String msg = "1 / ";
-    msg += Kp;
-    lcd.print(msg);
+    lcd.print("1 / " + String(Kp));
     switch(get_key(analogRead(7))) {
       case 1: Kp -= 10; break;
       case 3: Kp += 10; break;
@@ -102,9 +101,7 @@ void parametrizar_Ki(MenuItem* p_menu_item) {
   int value = Ki;
   while(1) {
     lcd.setCursor(0,1);
-    String msg = "1 / ";
-    msg += value;
-    lcd.print(msg);
+    lcd.print("1 / " + String(Ki));
     switch(get_key(analogRead(7))) {
       case 1: Ki -= 1000; break;
       case 3: Ki += 1000; break;
@@ -118,12 +115,9 @@ void parametrizar_Kd(MenuItem* p_menu_item) {
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print("Kd");
-  float value = Kd;
   while(1) {
     lcd.setCursor(0,1);
-    String msg = "3 / ";
-    msg += value;
-    lcd.print(msg);
+    lcd.print("3 / " + String(Kd));
     switch(get_key(analogRead(7))) {
       case 1: Kd -= 0.1; break;
       case 3: Kd += 0.1; break;
@@ -141,12 +135,12 @@ void lineFollowing(MenuItem* p_menu_item) {
   drive(255,255,FORWARD);
   while (1) {
     delay(100);
-    double position = read_sensor_data(); // TODO: Read sensor data
+    double position = read_sensor_data();
     
     double error = 0 - position;
     double integral = integral + error * 0.1;
-    double derivative = (error - prev_error)/0.1;
-    
+    double derivative = (error - prev_error) / 0.1;
+
     double power_difference  = ((1 / Kp) * error) + ((1 / Ki) * integral) + ((3 / Kd) * derivative);
     prev_error = error;
 
@@ -160,8 +154,7 @@ void lineFollowing(MenuItem* p_menu_item) {
     else
       drive(max, max - power_difference, FORWARD);
     
-    adc_key_in = analogRead(7);
-    if(get_key(adc_key_in) == 0) { drive(180, 180, -1); return; }
+    if(get_key(analogRead(7)) == 0) { drive(180, 180, -1); return; }
   }
 }
 
@@ -169,15 +162,15 @@ double read_sensor_data() {
   byte sens = (digitalRead(S1) == HIGH) + (digitalRead(S2) == HIGH) * 2 + (digitalRead(S3) == HIGH) * 4 + (digitalRead(S4) == HIGH) * 8;
   switch(sens) {
     case B00000001:
-      return 2;
+      return 180;
     case B00000010:
-      return 1;
+      return 90;
     case B00000110:
       return 0;
     case B00000100:
-      return -1;
+      return -90;
     case B00001000:
-      return -2;
+      return -180;
     default:
       return 0;
   }
@@ -201,8 +194,7 @@ void testa_sensores(MenuItem* p_menu_item) {
     lcd.clear();
     lcd.print(read_sensor_data());
     delay(500);
-    adc_key_in = analogRead(7);
-    if(get_key(adc_key_in) == 0) return;
+    if(get_key(analogRead(7)) == 0) return;
   }
 }
 
@@ -252,7 +244,6 @@ void setup(void) {
   diagnostico.add_item(&testarMotores, &testa_motores);
   diagnostico.add_item(&testarSensores, &testa_sensores);
   ms.set_root_menu(&mm);
-  Serial.begin(9600);
   atualiza_menu();
 }
 
