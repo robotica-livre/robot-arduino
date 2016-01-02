@@ -31,7 +31,9 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 MenuSystem ms;
 Menu mm("Robot Arduino");
 Menu ajustarParametros("Ajustar Parametros");
-
+MenuItem parametroKp("Parametrizar Kp");
+MenuItem parametroKi("Parametrizar Ki");
+MenuItem parametroKd("Parametrizar Kd");
 MenuItem seguirLinha("Seguir Linha");
 Menu diagnostico("Diagnostico");
 MenuItem testarMotores("Testar Motores");
@@ -44,14 +46,9 @@ int adc_key_in;
 float average = 0;
 double prev_error = 0;
 double integral = 0;
-double Kp = 1 / 20;
-double Ki = 1 / 10000;
-double Kd = 3/2;
-
-void stop(void) {
-  digitalWrite(E1, LOW);
-  digitalWrite(E2, LOW);
-}
+int Kp = 20;
+int Ki = 10000;
+double Kd = 2;
 
 void drive(char left, char right, int direction) {
   analogWrite (E1, left);
@@ -74,6 +71,65 @@ void drive(char left, char right, int direction) {
       digitalWrite(M1, HIGH);
       digitalWrite(M2, LOW);
       break;
+    default:
+      digitalWrite(E1, LOW);
+      digitalWrite(E2, LOW);
+  }
+}
+
+void parametrizar_Kp(MenuItem* p_menu_item) {
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Kp");
+  while(1) {
+    lcd.setCursor(0,1);
+    String msg = "1 / ";
+    msg += Kp;
+    lcd.print(msg);
+    switch(get_key(analogRead(7))) {
+      case 1: Kp -= 10; break;
+      case 3: Kp += 10; break;
+      case 0: return;
+    }
+    delay(200);
+  }
+}
+
+void parametrizar_Ki(MenuItem* p_menu_item) {
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Ki");
+  int value = Ki;
+  while(1) {
+    lcd.setCursor(0,1);
+    String msg = "1 / ";
+    msg += value;
+    lcd.print(msg);
+    switch(get_key(analogRead(7))) {
+      case 1: Ki -= 1000; break;
+      case 3: Ki += 1000; break;
+      case 0: return;
+    }
+    delay(200);
+  }
+}
+
+void parametrizar_Kd(MenuItem* p_menu_item) {
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Kd");
+  float value = Kd;
+  while(1) {
+    lcd.setCursor(0,1);
+    String msg = "3 / ";
+    msg += value;
+    lcd.print(msg);
+    switch(get_key(analogRead(7))) {
+      case 1: Kd -= 0.1; break;
+      case 3: Kd += 0.1; break;
+      case 0: return;
+    }
+    delay(200);
   }
 }
 
@@ -91,7 +147,7 @@ void lineFollowing(MenuItem* p_menu_item) {
     double integral = integral + error * 0.1;
     double derivative = (error - prev_error)/0.1;
     
-    double power_difference  = (Kp * error) + (Ki * integral) + (Kd * derivative);
+    double power_difference  = ((1 / Kp) * error) + ((1 / Ki) * integral) + ((3 / Kd) * derivative);
     prev_error = error;
 
     const int max = 180;
@@ -104,8 +160,8 @@ void lineFollowing(MenuItem* p_menu_item) {
     else
       drive(max, max - power_difference, FORWARD);
     
-    adc_key_in = analogRead(0);
-    if(get_key(adc_key_in) == 0) { stop(); return; }
+    adc_key_in = analogRead(7);
+    if(get_key(adc_key_in) == 0) { drive(180, 180, -1); return; }
   }
 }
 
@@ -136,17 +192,16 @@ void testa_motores(MenuItem* p_menu_item) {
   delay(2000);
   drive(180, 180, RIGHT);
   delay(2000);
-  stop();
+  drive(180, 180, -1);
 }
 
 void testa_sensores(MenuItem* p_menu_item) {
-  lcd.clear();
   lcd.setCursor(0,1);
   while(1) {
     lcd.clear();
     lcd.print(read_sensor_data());
     delay(500);
-    adc_key_in = analogRead(0);
+    adc_key_in = analogRead(7);
     if(get_key(adc_key_in) == 0) return;
   }
 }
@@ -161,9 +216,9 @@ void atualiza_menu() {
   adc_key_in = analogRead(7);
   int key = get_key(adc_key_in);
   switch (key) {
-    case 0: lcd.clear(); ms.back(); delay(200); break;
-    case 1: lcd.clear(); ms.prev(); delay(200); break;
-    case 3: lcd.clear(); ms.next(); delay(200); break;
+    case 0: lcd.clear(); ms.back();   delay(200); break;
+    case 1: lcd.clear(); ms.prev();   delay(200); break;
+    case 3: lcd.clear(); ms.next();   delay(200); break;
     case 4: lcd.clear(); ms.select(); delay(200); break;
   }
 }
@@ -189,11 +244,15 @@ void setup(void) {
   lcd.clear();
   
   mm.add_menu(&ajustarParametros);
+  ajustarParametros.add_item(&parametroKp, parametrizar_Kp);
+  ajustarParametros.add_item(&parametroKi, parametrizar_Ki);
+  ajustarParametros.add_item(&parametroKd, parametrizar_Kd);
   mm.add_item(&seguirLinha, &lineFollowing);
   mm.add_menu(&diagnostico);
   diagnostico.add_item(&testarMotores, &testa_motores);
   diagnostico.add_item(&testarSensores, &testa_sensores);
   ms.set_root_menu(&mm);
+  Serial.begin(9600);
   atualiza_menu();
 }
 
